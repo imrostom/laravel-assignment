@@ -59,6 +59,7 @@ class AuthController extends BaseApiController
         ]);
 
         return $this->success([
+            'user' => $user,
             'token' => $user->createToken('authToken')->plainTextToken,
         ]);
     }

@@ -1,9 +1,6 @@
 <?php
 
-use App\Services\BBCNewsApiService;
-use App\Services\NewsApiService;
-use App\Services\NewYorkTimesService;
-use App\Services\TheGuardianService;
+use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -11,20 +8,10 @@ Route::get('/', function () {
 });
 
 
-Route::get('newsapi', function () {
-   dd(app(NewsApiService::class)->syncWithDatabase());
+Route::get('/test', function () {
 });
 
-Route::get('bbc', function () {
-    dd(app(BBCNewsApiService::class)->syncWithDatabase());
-});
-
-
-Route::get('nytime', function () {
-    dd(app(NewYorkTimesService::class)->syncWithDatabase());
-});
-
-
-Route::get('guardianapis', function () {
-    dd(app(TheGuardianService::class)->syncWithDatabase());
-});
+Route::get('newsapi', [TestController::class, 'syncNewsApi']);
+Route::get('bbc', [TestController::class, 'syncBBCNews']);
+Route::get('nytime', [TestController::class, 'syncNYTimes']);
+Route::get('guardian', [TestController::class, 'syncTheGuardian']);
