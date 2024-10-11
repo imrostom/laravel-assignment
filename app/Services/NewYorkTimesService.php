@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\News;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -62,16 +63,22 @@ class NewYorkTimesService
         }
 
         try {
-            // Here ignore batch insert & pagination
+            // Here ignore batch insert
             foreach ($news as $article) {
-                News::updateOrCreate(
-                    ['url' => $article['url']], // Use the URL as a unique identifier
+                $imageUrl = null;
+                if(isset($article['multimedia'][0])) {
+                    $imageUrl = 'https://www.nytimes.com/' . $article['multimedia'][0]['url'];
+                }
+
+                News::query()->updateOrCreate(
+                    ['url' => $article['web_url']], // Use the URL as a unique identifier
                     [
-                        'title' => $article['title'],
-                        'description' => $article['description'],
-                        'content' => $article['content'],
-                        'published_at' => $article['publishedAt'],
-                        'source' => $article['source']['name']
+                        'title' => $article['abstract'],
+                        'content' => $article['lead_paragraph'],
+                        'image' => $imageUrl,
+                        'published_at' => now()->parse($article['pub_date'])->format('Y-m-d H:i:s'),
+                        'source' => $article['source'] ?? '',
+                        'platform' => 'new-york-times',
                     ]
                 );
             }

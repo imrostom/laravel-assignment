@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\News;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -57,22 +59,22 @@ class NewsApiService
     public function syncWithDatabase(): array
     {
         $news = $this->searchNews('world war');
-        dd($news[0]['content']);
         if (blank($news)) {
             return [];
         }
 
         try {
-            // Here ignore batch insert & pagination
+            // Here ignore batch insert
             foreach ($news as $article) {
-                News::updateOrCreate(
+                News::query()->updateOrCreate(
                     ['url' => $article['url']], // Use the URL as a unique identifier
                     [
                         'title' => $article['title'],
-                        'description' => $article['description'],
-                        'content' => $article['content'],
-                        'published_at' => $article['publishedAt'],
-                        'source' => $article['source']['name']
+                        'content' => $article['description'],
+                        'image' => $article['urlToImage'],
+                        'published_at' => now()->parse($article['publishedAt'])->format('Y-m-d H:i:s'),
+                        'source' => $article['source']['name'] ?? '',
+                        'platform' => 'news-api',
                     ]
                 );
             }

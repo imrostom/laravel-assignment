@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\News;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -35,7 +36,7 @@ class BBCNewsApiService
                     $totalResults = $result['totalResults'] ?? 0;
                     $articles = $result['articles'] ?? [];
 
-                    if(count($articles)) {
+                    if (count($articles)) {
                         $data = array_merge($data, $articles);
                     }
 
@@ -58,22 +59,22 @@ class BBCNewsApiService
     public function syncWithDatabase(): array
     {
         $news = $this->searchNews('');
-        dd($news);
         if (blank($news)) {
             return [];
         }
 
         try {
-            // Here ignore batch insert & pagination
+            // Here ignore batch insert
             foreach ($news as $article) {
-                News::updateOrCreate(
+                News::query()->updateOrCreate(
                     ['url' => $article['url']], // Use the URL as a unique identifier
                     [
                         'title' => $article['title'],
-                        'description' => $article['description'],
-                        'content' => $article['content'],
-                        'published_at' => $article['publishedAt'],
-                        'source' => $article['source']['name']
+                        'content' => $article['description'],
+                        'image' => $article['urlToImage'],
+                        'published_at' => now()->parse($article['publishedAt'])->format('Y-m-d H:i:s'),
+                        'source' => $article['source']['name'] ?? '',
+                        'platform' => 'bbc-news',
                     ]
                 );
             }

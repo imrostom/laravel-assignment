@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\News;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -57,22 +58,22 @@ class TheGuardianService
     public function syncWithDatabase(): array
     {
         $news = $this->getArticles('');
-        dd($news);
         if (blank($news)) {
             return [];
         }
 
         try {
-            // Here ignore batch insert & pagination
+            // Here ignore batch insert
             foreach ($news as $article) {
-                News::updateOrCreate(
-                    ['url' => $article['url']], // Use the URL as a unique identifier
+                News::query()->updateOrCreate(
+                    ['url' => $article['webUrl']], // Use the URL as a unique identifier
                     [
-                        'title' => $article['title'],
-                        'description' => $article['description'],
-                        'content' => $article['content'],
-                        'published_at' => $article['publishedAt'],
-                        'source' => $article['source']['name']
+                        'title' => $article['webTitle'],
+                        'content' => $article['webTitle'],
+                        'image' => null,
+                        'published_at' => now()->parse($article['webPublicationDate'])->format('Y-m-d H:i:s'),
+                        'source' => $article['sectionName'] ?? '',
+                        'platform' => 'guardian',
                     ]
                 );
             }

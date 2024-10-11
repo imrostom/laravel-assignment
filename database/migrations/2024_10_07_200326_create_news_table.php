@@ -17,8 +17,9 @@ return new class extends Migration
             $table->text('content')->nullable();
             $table->string('image')->nullable();
             $table->string('url')->unique();
-            $table->string('source');
+            $table->string('source')->nullable();
             $table->timestamp('published_at')->nullable();
+            $table->string('platform');
             $table->timestamps();
         });
     }
