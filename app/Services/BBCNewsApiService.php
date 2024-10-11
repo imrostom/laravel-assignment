@@ -6,7 +6,7 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class NewsApiService
+class BBCNewsApiService
 {
     protected string $baseUrl = 'https://newsapi.org/v2/';
 
@@ -20,6 +20,7 @@ class NewsApiService
             do {
                 $response = Http::get($this->baseUrl . 'everything', [
                     'q' => $q,
+                    'sources' => 'bbc-news',
                     'from' => now()->subDay()->format('Y-m-d'), // For testing data query purpose
                     'to' => now()->format('Y-m-d'), // For testing data query purpose
                     'apiKey' => config('services.newsapi.key'),
@@ -56,8 +57,8 @@ class NewsApiService
 
     public function syncWithDatabase(): array
     {
-        $news = $this->searchNews('world war');
-        dd($news[0]['content']);
+        $news = $this->searchNews('');
+        dd($news);
         if (blank($news)) {
             return [];
         }

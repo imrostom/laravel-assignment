@@ -6,11 +6,11 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class NewsApiService
+class TheGuardianService
 {
-    protected string $baseUrl = 'https://newsapi.org/v2/';
+    private string $baseUrl = 'https://content.guardianapis.com';
 
-    public function searchNews($q = ''): array
+    public function getArticles($query): array
     {
         $data = [];
 
@@ -18,24 +18,24 @@ class NewsApiService
             $i = 1;
 
             do {
-                $response = Http::get($this->baseUrl . 'everything', [
-                    'q' => $q,
-                    'from' => now()->subDay()->format('Y-m-d'), // For testing data query purpose
-                    'to' => now()->format('Y-m-d'), // For testing data query purpose
-                    'apiKey' => config('services.newsapi.key'),
+                $response = Http::get($this->baseUrl . '/search', [
+                    'q' => $query,
+                    'from-date' => now()->format('Y-m-d'),
+                    'to-date' => now()->format('Y-m-d'),
+                    'api-key' => config('services.guardian.key'),
                     'page' => $i,
-
+                    'page-size' => 50,
                 ]);
 
                 if ($response->successful()) {
-                    $result = $response->json();
+                    $result = $response->json('response');
 
                     // Get documents and metadata
-                    $totalResults = $result['totalResults'] ?? 0;
-                    $articles = $result['articles'] ?? [];
-
-                    if(count($articles)) {
-                        $data = array_merge($data, $articles);
+                    $currentPage = $result['currentPage'] ?? 0;
+                    $pages = $result['pages'] ?? 0;
+                    $results = $result['results'] ?? [];
+                    if (count($results)) {
+                        $data = array_merge($data, $results);
                     }
 
                     $i++; // Increment page for the next request
@@ -45,7 +45,7 @@ class NewsApiService
                     break; // Exit loop on unsuccessful response
                 }
 
-            } while ($totalResults > count($data));
+            } while ($pages > $currentPage);
 
         } catch (Exception $e) {
             Log::error($e->getMessage());
@@ -56,8 +56,8 @@ class NewsApiService
 
     public function syncWithDatabase(): array
     {
-        $news = $this->searchNews('world war');
-        dd($news[0]['content']);
+        $news = $this->getArticles('');
+        dd($news);
         if (blank($news)) {
             return [];
         }

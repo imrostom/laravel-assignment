@@ -6,36 +6,36 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class NewsApiService
+class NewYorkTimesService
 {
-    protected string $baseUrl = 'https://newsapi.org/v2/';
+    private string $baseUrl = 'https://api.nytimes.com/svc/search/v2';
 
-    public function searchNews($q = ''): array
+    public function getArticles($query): array
     {
         $data = [];
 
         try {
-            $i = 1;
+            $i = 0;
 
             do {
-                $response = Http::get($this->baseUrl . 'everything', [
-                    'q' => $q,
-                    'from' => now()->subDay()->format('Y-m-d'), // For testing data query purpose
-                    'to' => now()->format('Y-m-d'), // For testing data query purpose
-                    'apiKey' => config('services.newsapi.key'),
+                $response = Http::get($this->baseUrl . '/articlesearch.json', [
+                    'q' => $query,
+                    'begin_date' => now()->format('Ymd'),
+                    'end_date' => now()->format('Ymd'),
+                    'api-key' => config('services.nytimes.key'),
                     'page' => $i,
-
                 ]);
 
                 if ($response->successful()) {
-                    $result = $response->json();
+                    $result = $response->json('response');
 
                     // Get documents and metadata
-                    $totalResults = $result['totalResults'] ?? 0;
-                    $articles = $result['articles'] ?? [];
+                    $docs = $result['docs'] ?? [];
+                    $hits = $result['meta']['hits'] ?? 0;
+                    $offset = $result['meta']['offset'] ?? 0;
 
-                    if(count($articles)) {
-                        $data = array_merge($data, $articles);
+                    if(count($docs)) {
+                        $data = array_merge($data, $docs);
                     }
 
                     $i++; // Increment page for the next request
@@ -45,7 +45,7 @@ class NewsApiService
                     break; // Exit loop on unsuccessful response
                 }
 
-            } while ($totalResults > count($data));
+            } while ($hits > $offset);
 
         } catch (Exception $e) {
             Log::error($e->getMessage());
@@ -56,8 +56,7 @@ class NewsApiService
 
     public function syncWithDatabase(): array
     {
-        $news = $this->searchNews('world war');
-        dd($news[0]['content']);
+        $news = $this->getArticles('war');
         if (blank($news)) {
             return [];
         }

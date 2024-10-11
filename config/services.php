@@ -39,4 +39,13 @@ return [
         'key' => env('NEWS_API_KEY'),
     ],
 
+    'nytimes' => [
+        'key' => env('NYTIMES_KEY'),
+        'secret' => env('NYTIMES_SECRET'),
+    ],
+
+    'guardian' => [
+        'key' => env('THEGUARDIAN_KEY'),
+    ]
+
 ];
